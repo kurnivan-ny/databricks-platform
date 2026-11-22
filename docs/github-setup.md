@@ -1,62 +1,73 @@
-# GitHub setup (one time)
+# GitHub setup
 
-Everything below is done in the GitHub web UI; no extra tools are needed.
+One-time setup, done in the GitHub and Databricks web UIs. It takes about 10 minutes.
 
-## 1. Repository
+1. [Repository and branches](#1-repository-and-branches)
+2. [Databricks tokens](#2-databricks-tokens)
+3. [Secrets](#3-secrets)
+4. [Environments](#4-environments)
+5. [Branch rules](#5-branch-rules)
+6. [First run](#6-first-run)
 
-1. Create a **public** repository (on the free plan, required reviewers for environments
-   only work in public repos). No secrets are stored in the code.
-2. Push `main` and `develop`:
+## 1. Repository and branches
 
-   ```bash
-   git remote add origin https://github.com/<you>/databricks-platform.git
-   git push -u origin main develop
-   ```
-3. **Settings → General**: set the default branch to `develop`, so feature PRs target it.
+| Setting | Value | Why |
+|---|---|---|
+| Visibility | **Public** | On the free plan, required reviewers for environments only work in public repositories. The repository contains no secrets. |
+| Branches | `main` (PROD), `develop` (DEV) | Merging to each branch deploys to its environment. |
+| Default branch | `develop` | Feature pull requests target `develop` by default. |
 
-## 2. Personal access tokens (Databricks)
+## 2. Databricks tokens
 
-In the Databricks workspace: **Settings → Developer → Access tokens → Generate new token**.
+In Databricks, go to **Settings → Developer → Access tokens → Generate new token** and
+create two tokens:
 
-* Create **two** tokens, `github-ci-dev` and `github-ci-prod`, each with a lifetime of
-  about 90 days.
-* Put an expiry reminder in your calendar. CI fails with `401` when a token expires.
+| Token name | Lifetime | Used by |
+|---|---|---|
+| `github-ci-dev` | 90 days | CI validation and Deploy DEV |
+| `github-ci-prod` | 90 days | Deploy PROD |
 
-## 3. Secrets and environments
+Never paste tokens into chat, issues or code; enter them only in the GitHub secret form.
+Rotation is described in the [runbook](runbook.md#rotate-tokens).
 
-**Settings → Secrets and variables → Actions → New repository secret**
+## 3. Secrets
+
+**Settings → Secrets and variables → Actions → Repository secrets**
 
 | Name | Value |
 |---|---|
-| `DATABRICKS_HOST` | workspace URL, e.g. `https://<workspace>.cloud.databricks.com` |
-| `DATABRICKS_TOKEN` | the **dev** token |
+| `DATABRICKS_HOST` | workspace URL, e.g. `https://dbc-xxxxxxxx-xxxx.cloud.databricks.com` |
+| `DATABRICKS_TOKEN` | the `github-ci-dev` token |
 
-**Settings → Environments**
+## 4. Environments
 
-| Environment | Deployment branches | Protection | Secrets |
+**Settings → Environments → New environment**
+
+| Environment | Deployment branches | Protection rules | Environment secrets |
 |---|---|---|---|
-| `dev` | `develop` only | none | none (uses the repo secrets) |
-| `prod` | `main` only | **Required reviewers**: you (and/or teammates) | `DATABRICKS_TOKEN` = the **prod** token |
+| `dev` | `develop` | none | none (uses the repository secrets) |
+| `prod` | `main` | **Required reviewers**: you or your team | `DATABRICKS_TOKEN` = the `github-ci-prod` token |
 
-An environment secret overrides the repository secret with the same name, so PROD jobs use
-the prod token automatically.
+* The `prod` environment secret overrides the repository secret with the same name, so
+  PROD jobs use the PROD token automatically.
+* If you are the only reviewer, leave **Prevent self-review** unchecked so you can approve
+  your own deployments.
 
-If you are the only reviewer, leave **Prevent self-review** unchecked so you can approve
-your own deployments.
+## 5. Branch rules
 
-## 4. Branch rules
-
-**Settings → Rules → Rulesets → New branch ruleset** for `main` and `develop`:
+**Settings → Rules → Rulesets → New branch ruleset**, targeting `main` and `develop`:
 
 * Require a pull request before merging.
-* Require status checks to pass: `Lint and unit tests`. Add the `Validate bundle · sales`
-  check once it has run at least once.
+* Require status checks to pass: **Lint and unit tests**. Add **Validate bundle · sales**
+  after it has run once.
 * Block force pushes.
 
-## 5. First run
+## 6. First run
 
-1. Open a PR from a feature branch into `develop` and check that **CI** is green.
-2. Merge it. **Deploy DEV** runs and tags `deploy/dev/sales`.
-3. Open a PR `develop → main`, merge it, and approve the waiting **Deploy PROD** run.
-
-Manual runs are under **Actions → Deploy DEV / Deploy PROD → Run workflow**.
+1. Create a feature branch, change something small, and open a pull request into
+   `develop`. Check that **CI** is green.
+2. Merge it. **Deploy DEV** deploys `sales` to `/Workspace/databricks-platform/dev/sales`
+   and tags `deploy/dev/sales`.
+3. Open a pull request from `develop` to `main` and merge it.
+4. Approve the waiting **Deploy PROD** run. It deploys to
+   `/Workspace/databricks-platform/prod/sales` and tags `release/sales/<timestamp>`.

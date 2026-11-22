@@ -1,130 +1,150 @@
-# Architecture and decisions
+# Architecture
 
-![Architecture](diagrams/architecture.svg)
+1. [Goals](#goals)
+2. [Free Edition constraints](#free-edition-constraints)
+3. [Environments and workspace layout](#environments-and-workspace-layout)
+4. [Data and transformation design](#data-and-transformation-design)
+5. [CI/CD design](#cicd-design)
+6. [Security](#security)
+7. [Verification status](#verification-status)
+8. [Limitations](#limitations)
 
 ## Goals
 
-A local-first CI/CD proof of concept on **Databricks Free Edition** with **GitHub Actions**:
+* Build a local-first CI/CD on **Databricks Free Edition** and **GitHub Actions**.
+* Deploy each project as its own Databricks Asset Bundle, and deploy only projects that
+  changed.
+* Separate DEV and PROD by Unity Catalog catalog inside one workspace.
+* Deploy to DEV automatically; deploy to PROD after manual approval.
+* Allow rollback per project.
+* Keep all logic in scripts, so moving to GitLab CI only means rewriting the pipeline YAML.
 
-* Each project is an independent Databricks Asset Bundle and deploys separately.
-* DEV and PROD are separated by Unity Catalog catalogs inside a single workspace.
-* Deployments are automatic to DEV and need manual approval for PROD.
-* Rollback works per project.
-* Everything runs from scripts, so a later GitLab CI migration only rewrites the
-  pipeline YAML.
+![Platform architecture](diagrams/architecture.svg)
 
-## Free Edition findings that shaped the design
+*Laptop → GitHub → Databricks. Actions deploys and runs bundles. Environments gate PROD.
+Secrets hold the workspace URL and tokens.*
 
-| Constraint (Free Edition docs, Nov 2026) | Design response |
+## Free Edition constraints
+
+| Constraint (Databricks docs, Nov 2026) | Design response |
 |---|---|
-| Serverless compute only | All job tasks use serverless environments; there is no cluster config |
-| 1 SQL warehouse, 2X-Small | Dashboards look up the "Serverless Starter Warehouse" by name; DEV and PROD share it |
-| 5 concurrent job tasks per account | Job tasks run in sequence; CI deploys one project at a time (`max-parallel: 1`) |
-| 1 active pipeline per type | Not applicable: there is no Lakeflow pipeline (plain Delta tables, see below) |
-| No account console or account-level APIs | No account-level service principals and no GitHub OIDC federation, so CI uses **personal access tokens** |
-| Daily fair-use compute quota | Small synthetic dataset; generation is incremental (missing days only) |
-| Not for commercial use | PoC only, synthetic data only |
+| Serverless compute only | Job tasks use serverless environments (`environment_version: "4"`) |
+| One SQL warehouse, 2X-Small | Dashboards look up *Serverless Starter Warehouse* by name |
+| 5 concurrent job tasks per account | Tasks run in sequence; CI deploys one project at a time |
+| One active pipeline per type | Not relevant: no Lakeflow pipeline, only plain Delta tables |
+| No account console or account APIs | No service principals or GitHub OIDC, so CI uses **personal access tokens** |
+| Daily fair-use compute quota | Small synthetic dataset; data generation is incremental |
+| Not for commercial use | PoC with synthetic data only |
 
-GitHub **free plan**: environment required reviewers only work in **public** repositories,
-so the repo is public. Secrets live in GitHub Secrets, never in the code.
+On the GitHub **free plan**, environment required reviewers work only in **public**
+repositories, so the repository is public. Secrets never appear in the code.
 
-## Environments
+## Environments and workspace layout
 
 | | DEV | PROD |
 |---|---|---|
+| Git branch | `develop` | `main` |
+| Workflow | `deploy-dev.yml`, automatic | `deploy-prod.yml`, after approval |
+| Bundle target | `dev` (job schedule paused) | `prod` (`mode: production`, schedule active) |
 | Catalog | `dev` | `prod` |
-| Schemas | `bronze`, `silver`, `gold` (shared by all projects) | same |
-| Deployed by | `deploy-dev.yml` on merge to `develop` | `deploy-prod.yml` on merge to `main`, after approval |
-| Bundle target | `dev` (schedule paused) | `prod` (`mode: production`, schedule active) |
-| Workspace path | `/Users/<deployer>/.bundle/sales/dev` | `/Users/<deployer>/.bundle/sales/prod` |
-| Credentials | repo secrets `DATABRICKS_HOST`, `DATABRICKS_TOKEN` | `prod` environment secret `DATABRICKS_TOKEN` (separate PAT) |
+| Schemas | `bronze`, `silver`, `gold` | `bronze`, `silver`, `gold` |
+| Workspace folder | `/Workspace/databricks-platform/dev/<project>` | `/Workspace/databricks-platform/prod/<project>` |
+| Folder, job and dashboard permissions | all users: manage | deployer: manage · all users: view |
+| Token | repo secret `DATABRICKS_TOKEN` | `prod` environment secret `DATABRICKS_TOKEN` |
 
-Schemas are created once by `scripts/bootstrap_uc.sql`, not by a bundle, so destroying one
-project's bundle can never drop a schema another project uses.
+```text
+/Workspace/databricks-platform/
+├── dev/<project>/     files, state and resources deployed from develop
+└── prod/<project>/    files, state and resources deployed from main
+```
+
+* **Both environments live under one platform folder.** That makes the deployed code easy
+  to find. The paths are set explicitly in `databricks.yml`; without them the CLI would
+  deploy into the deploying user's home folder.
+* **`Shared` is not used.** Every user can edit `Shared`, and Databricks advises against it
+  for production deployments.
+* **Schemas are created once by `scripts/bootstrap_uc.sql`, not by bundles.** Destroying
+  one project can therefore never drop a schema another project uses.
 
 ## Data and transformation design
 
-![Data flow](diagrams/data-flow.svg)
+![Sales data flow](diagrams/data-flow.svg)
 
-* **SQL holds the logic; a config-driven Python wrapper runs it.** Each table is a
-  `SELECT` file plus an entry in `src/tables/tables.yml`: layer, write mode, keys and
-  data-quality rules. `shared/python/platform_common/tables.py` executes the registry. It
-  is shared by all projects, so adding a table never needs new Python.
-* **Plain managed Delta tables.** There are no streaming tables and no Lakeflow pipeline.
-  * Bronze loads only new landing files (`append_new_files`, idempotent per file).
-  * Silver uses `MERGE` on business keys.
-  * Gold uses `CREATE OR REPLACE`.
-  * Materialized views weren't needed, because gold is small and fully rebuilt.
-* **Data-quality rules.**
-  * `expect` warns only.
-  * `expect_or_drop` excludes bad rows; `<table>_quarantine` holds the latest rejects.
-  * `expect_or_fail` stops the build.
-* **Unity Catalog metric views are the semantic layer.** Gold tables contain only additive
-  base measures. Every KPI formula, including prior year and YoY, is defined once in a
-  metric view. Metric views aren't a bundle resource type yet, so the job task
-  `publish_metric_views` creates them (`CREATE OR REPLACE VIEW … WITH METRICS`).
-* **The AI/BI dashboard reads the metric views directly.** Metric-view datasets need fully
-  qualified names, so the committed template uses `__CATALOG__` / `__GOLD_SCHEMA__` tokens.
-  `scripts/render_dashboards.py` renders the template per target at deploy time.
+*Each arrow is one job task step. Bronze loads only new files, silver merges on keys and
+quarantines rejected rows, gold aggregates, and the metric views hold every KPI formula.*
+
+| Decision | Why |
+|---|---|
+| **SQL holds the logic; a config-driven Python wrapper runs it.** Each table is one `SELECT` file plus an entry in `src/tables/tables.yml`. | Adding a table needs no Python. The wrapper (`shared/python/platform_common/tables.py`) is shared by all projects. |
+| **Plain managed Delta tables.** No streaming tables, no Lakeflow pipeline, no materialized views. | The data is small and full gold rebuilds are cheap. This also avoids the one-active-pipeline limit. |
+| **Write modes:** bronze `append_new_files`, silver `merge`, gold `replace`. | Bronze is idempotent per file; silver upserts by business key; gold is always consistent. |
+| **Expectations:** `expect` (warn), `expect_or_drop` (rows go to `<table>_quarantine`), `expect_or_fail` (stop the build). | Bad data is visible, not silent. |
+| **Unity Catalog metric views are the semantic layer.** Gold tables hold only additive measures; every ratio, prior-year and YoY measure is defined once. | Ratios stay correct at any filter or grouping. The dashboard, SQL and Genie share one definition. |
+| **The job publishes the metric views.** It runs `CREATE OR REPLACE VIEW … WITH METRICS`. | Metric views are not yet a bundle resource type. Redeploying an old release and re-running the job also rolls them back. |
+| **The dashboard reads the metric views directly.** Templates use `__CATALOG__` tokens, rendered per target. | Metric-view datasets need fully qualified names, which bundle variables cannot reach inside the JSON file. |
 
 ## CI/CD design
 
 ![CI/CD flow](diagrams/cicd-flow.svg)
 
-* **Only affected projects deploy.**
-  * Pull requests: CI validates projects changed relative to the base branch.
-  * Deploys: each project is compared with its own tag, `deploy/<env>/<project>`, which
-    moves only after a successful deploy. A cancelled or failed run therefore never hides
-    a change.
+*Top lane: merging to `develop` deploys to DEV automatically. Bottom lane: merging to
+`main` waits for approval before deploying to PROD. Rollback goes through the same
+approval.*
+
+* **Change detection.**
+  * A PR validates projects changed relative to its base branch.
+  * A deploy compares each project with its tag `deploy/<env>/<project>`, which moves only
+    after success, so a failed or cancelled run never hides a change.
   * Changes under `shared/` affect every project.
-* **Each deploy is also the integration test.**
-  1. `bundle validate`
-  2. `bundle deploy`
-  3. Run the project job: data → tables → metric views → quality checks.
-  4. Execute every deployed dashboard widget query (`verify_dashboards.py`).
-* **Rollback.** Every PROD deploy creates an immutable tag, `release/<project>/<UTC ts>`.
-  Running *Deploy PROD* manually with that tag redeploys that project's code, job and
-  dashboard, and the job re-publishes the older metric views. Data is not rolled back;
-  Delta time travel is available if needed. The next merge to `main` that touches the
-  project deploys `main` again, so follow a rollback with a revert commit.
-* **Portable.** All logic lives in `scripts/`: `bundle.sh`, `changed_projects.py`,
-  `install_databricks_cli.sh`, `verify_dashboards.py`, `mark_deployed.sh`. The workflows
-  only call those scripts.
+* **Each deploy is also the integration test.** It runs `bundle validate`, then
+  `bundle deploy`, then the project job (data → tables → metric views → quality checks).
+  Finally `verify_dashboards.py` runs every widget query of the deployed dashboard.
+* **Rollback.**
+  * Every PROD deploy creates an immutable tag, `release/<project>/<UTC timestamp>`.
+  * Re-running *Deploy PROD* with that tag restores the code, job, dashboard and metric
+    views.
+  * Data is not rolled back; use Delta time travel if needed.
+* **Portability.** The workflows only call scripts in `scripts/`. The GitLab mapping:
 
-## Security notes
+  | GitHub | GitLab |
+  |---|---|
+  | workflows | `.gitlab-ci.yml` |
+  | environments | protected environments |
+  | secrets | masked CI/CD variables |
 
-* There are no hosts, tokens or workspace IDs in the repo; a unit test fails on a
-  committed PAT pattern.
-* Fork PRs never receive secrets; bundle validation runs only for same-repo PRs.
-* Local `prod` deploys are refused unless `ALLOW_LOCAL_PROD=1`.
-  `bundle destroy` on prod is refused unless `ALLOW_PROD_DESTROY=1`.
-* Deploys never auto-approve destructive changes, so CI stops for a human instead.
-* The CLI is pinned (`.databricks-cli-version`) and its download is checked against the
-  release SHA-256 sums.
+## Security
 
-## Limitations of this PoC
+* No hosts, tokens or workspace IDs are in the repository. A unit test fails if a token
+  pattern is committed.
+* Pull requests from forks never receive secrets; bundle validation runs only for
+  same-repository PRs.
+* `bundle.sh` refuses a local `prod` deploy unless `ALLOW_LOCAL_PROD=1` is set, and refuses
+  `destroy` on prod unless `ALLOW_PROD_DESTROY=1` is set.
+* Deploys never auto-approve destructive changes; CI stops for a human instead.
+* The Databricks CLI is pinned (`.databricks-cli-version`) and its download is checked
+  against the release SHA-256 sums.
 
-* **One identity.** Both PATs belong to the same user, so DEV and PROD are separated by
-  catalog and process, not by permissions. On a paid workspace, use one service principal
-  per environment with OAuth (or GitHub OIDC federation) and grant the DEV identity no
-  access to `prod`.
-* **One workspace and one warehouse.** DEV and PROD share compute and the daily quota.
-* **Rollback covers code, not data.**
-* **Dashboard edits made in the UI are not saved automatically.** Use
-  `scripts/bundle.sh sales dev capture-dashboard sales_overview` to write them back into
-  the template, then commit.
+## Verification status
 
-## Assumptions to confirm on the first DEV deploy
+| Item | Status |
+|---|---|
+| Unit tests (109) and ruff | ✅ passing locally |
+| Bundle schema keys used in YAML | ✅ match CLI 1.23.0 `bundle schema` |
+| `bundle validate` for `dev` and `prod` | ✅ against the workspace |
+| Shared code layout after `sync.paths` (`files/projects/...`, `files/shared/python/...`) | ✅ confirmed after the first DEV deploy |
+| Warehouse name *Serverless Starter Warehouse* | ✅ confirmed |
+| Top-level folder `/Workspace/databricks-platform` allowed | ✅ confirmed |
+| Serverless `environment_version: "4"`, metric-view DDL from a job, dashboard JSON for metric-view datasets | ⏳ confirmed by the first full job run and `verify` |
+| CI workflows on GitHub | ⏳ after GitHub secrets and environments are set up |
 
-These follow the current docs but can only be proven against the workspace:
+## Limitations
 
-1. `sync.paths` with `../../shared/python` places files under
-   `${workspace.file_path}/projects/sales/...` and `.../shared/python/...`
-   (`entrypoint.py` searches both layouts and fails with a clear message otherwise).
-2. The Free Edition warehouse is named **Serverless Starter Warehouse**.
-3. Serverless `environment_version: "4"` is available.
-4. Serverless job compute can run `CREATE VIEW … WITH METRICS` (it needs DBR 17.3+).
-5. The dashboard JSON format for metric-view datasets (`asset_name`) and the widget specs
-   (counter targets, tables, filters). `verify` checks that every widget query runs. If a
-   visual setting is off, fix it in the UI and capture it back.
-6. `mode: production` accepts a user `run_as` plus explicit permissions.
+* **One identity.** Both tokens belong to the same user, so DEV and PROD are separated by
+  catalog, folder and process, not by permissions. On a paid workspace, use one service
+  principal per environment (OAuth or GitHub OIDC) and give the DEV identity no access to
+  `prod`.
+* **Shared compute.** DEV and PROD share one workspace, one warehouse and one daily
+  compute quota.
+* **Rollback restores code, not data.**
+* **Dashboard UI edits are not saved automatically.** Capture them back into the template
+  (see the runbook).
