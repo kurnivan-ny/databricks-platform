@@ -1,0 +1,59 @@
+# Reusable deployment workflow, called by deploy-dev.yml and deploy-prod.yml.
+# Per project: validate -> deploy -> run job (integration test) -> verify dashboard
+# -> tag the commit as deployed. Projects deploy one at a time: Free Edition allows only
+# 5 concurrent job tasks per account.
+name: _deploy
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: Bundle target and GitHub Environment (dev or prod).
+        type: string
+        required: true
+      projects:
+        description: JSON array of project names.
+        type: string
+        required: true
+      ref:
+        description: Git ref to deploy (empty = the triggering commit).
+        type: string
+        default: ""
+
+jobs:
+  deploy:
+    name: ${{ inputs.target }} · ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    # The environment holds the protection rules (prod: required reviewer) and secrets.
+    environment:
+      name: ${{ inputs.target }}
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        project: ${{ fromJSON(inputs.projects) }}
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: bash scripts/install_databricks_cli.sh
+      - name: Validate
+        run: bash scripts/bundle.sh "${{ matrix.project }}" "${{ inputs.target }}" validate
+      - name: Deploy
+        run: bash scripts/bundle.sh "${{ matrix.project }}" "${{ inputs.target }}" deploy
+      - name: Run job (integration test)
+        run: bash scripts/bundle.sh "${{ matrix.project }}" "${{ inputs.target }}" run
+      - name: Verify dashboard
+        run: bash scripts/bundle.sh "${{ matrix.project }}" "${{ inputs.target }}" verify
+      - name: Tag deployed commit
+        run: bash scripts/mark_deployed.sh "${{ inputs.target }}" "${{ matrix.project }}" "$(git rev-parse HEAD)"

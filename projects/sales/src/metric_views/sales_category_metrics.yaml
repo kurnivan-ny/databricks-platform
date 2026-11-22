@@ -1,0 +1,81 @@
+# Unity Catalog metric view: sales and gross margin by product category, store and month.
+# Published by the job task `publish_metric_views`. Formulas match sales_store_metrics.
+version: 1.1
+comment: >-
+  Net sales and gross margin by product category, store and month, with prior-year
+  values and year-on-year changes.
+source: ${catalog}.${gold_schema}.sales_category_monthly
+
+dimensions:
+  - name: month
+    expr: month
+    display_name: Month
+  - name: year
+    expr: YEAR(month)
+    display_name: Year
+  - name: category
+    expr: category
+    display_name: Category
+  - name: region
+    expr: region
+    display_name: Region
+  - name: city
+    expr: city
+    display_name: City
+  - name: store_id
+    expr: store_id
+    display_name: Store ID
+  - name: store_name
+    expr: store_name
+    display_name: Store
+
+measures:
+  - name: gross_sales
+    expr: SUM(gross_sales)
+    display_name: Gross sales
+  - name: discounts
+    expr: SUM(discounts)
+    display_name: Discounts
+  - name: returns
+    expr: SUM(returns)
+    display_name: Returns
+  - name: net_sales
+    expr: SUM(net_sales)
+    display_name: Net sales
+    synonyms: [revenue, sales]
+  - name: cogs
+    expr: SUM(cogs)
+    display_name: Cost of goods sold
+  - name: gross_margin
+    expr: MEASURE(net_sales) - MEASURE(cogs)
+    display_name: Gross margin
+  - name: gross_margin_pct
+    expr: MEASURE(gross_margin) / NULLIF(MEASURE(net_sales), 0)
+    display_name: Gross margin %
+  - name: units_sold
+    expr: SUM(units_sold)
+    display_name: Units sold
+  - name: return_rate
+    expr: MEASURE(returns) / NULLIF(MEASURE(gross_sales), 0)
+    display_name: Return rate
+  - name: discount_rate
+    expr: MEASURE(discounts) / NULLIF(MEASURE(gross_sales), 0)
+    display_name: Discount rate
+  - name: net_sales_py
+    expr: SUM(net_sales_py)
+    display_name: Net sales LY
+  - name: cogs_py
+    expr: SUM(cogs_py)
+    display_name: COGS LY
+  - name: gross_margin_py
+    expr: MEASURE(net_sales_py) - MEASURE(cogs_py)
+    display_name: Gross margin LY
+  - name: gross_margin_pct_py
+    expr: MEASURE(gross_margin_py) / NULLIF(MEASURE(net_sales_py), 0)
+    display_name: Gross margin % LY
+  - name: net_sales_yoy
+    expr: MEASURE(net_sales) / NULLIF(MEASURE(net_sales_py), 0) - 1
+    display_name: Net sales YoY
+  - name: gross_margin_pct_yoy_pts
+    expr: MEASURE(gross_margin_pct) - MEASURE(gross_margin_pct_py)
+    display_name: Gross margin % YoY (pts)

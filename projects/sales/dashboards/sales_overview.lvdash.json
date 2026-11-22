@@ -1,0 +1,2120 @@
+{
+  "datasets": [
+    {
+      "name": "store_metrics",
+      "displayName": "Store metrics (metric view)",
+      "asset_name": "__CATALOG__.__GOLD_SCHEMA__.sales_store_metrics"
+    },
+    {
+      "name": "category_metrics",
+      "displayName": "Category metrics (metric view)",
+      "asset_name": "__CATALOG__.__GOLD_SCHEMA__.sales_category_metrics"
+    }
+  ],
+  "pages": [
+    {
+      "name": "sales",
+      "displayName": "Sales",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "sales_filter_month",
+            "queries": [
+              {
+                "name": "filter_month_store_metrics",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "filter_month_category_metrics",
+                "query": {
+                  "datasetName": "category_metrics",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "month",
+                    "displayName": "Month",
+                    "queryName": "filter_month_store_metrics"
+                  },
+                  {
+                    "fieldName": "month",
+                    "displayName": "Month",
+                    "queryName": "filter_month_category_metrics"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Month"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "sales_filter_region",
+            "queries": [
+              {
+                "name": "filter_region_store_metrics",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "filter_region_category_metrics",
+                "query": {
+                  "datasetName": "category_metrics",
+                  "fields": [
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region",
+                    "queryName": "filter_region_store_metrics"
+                  },
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region",
+                    "queryName": "filter_region_category_metrics"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Region"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "sales_filter_store",
+            "queries": [
+              {
+                "name": "filter_store_name_store_metrics",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "filter_store_name_category_metrics",
+                "query": {
+                  "datasetName": "category_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "store_name",
+                    "displayName": "Store",
+                    "queryName": "filter_store_name_store_metrics"
+                  },
+                  {
+                    "fieldName": "store_name",
+                    "displayName": "Store",
+                    "queryName": "filter_store_name_category_metrics"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Store"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_net_sales",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "net_sales",
+                      "expression": "MEASURE(`net_sales`)"
+                    },
+                    {
+                      "name": "net_sales_py",
+                      "expression": "MEASURE(`net_sales_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "net_sales",
+                  "displayName": "Net sales",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "net_sales_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Net sales"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_sssg",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "same_store_sales_growth",
+                      "expression": "MEASURE(`same_store_sales_growth`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "same_store_sales_growth",
+                  "displayName": "Same-store sales growth",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Same-store sales growth"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_gross_margin_pct",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "gross_margin_pct",
+                      "expression": "MEASURE(`gross_margin_pct`)"
+                    },
+                    {
+                      "name": "gross_margin_pct_py",
+                      "expression": "MEASURE(`gross_margin_pct_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "gross_margin_pct",
+                  "displayName": "Gross margin %",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "gross_margin_pct_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Gross margin %"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_sales_per_m2",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "sales_per_m2",
+                      "expression": "MEASURE(`sales_per_m2`)"
+                    },
+                    {
+                      "name": "sales_per_m2_py",
+                      "expression": "MEASURE(`sales_per_m2_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sales_per_m2",
+                  "displayName": "Sales per m²",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "sales_per_m2_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Sales per m²"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_return_rate",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "return_rate",
+                      "expression": "MEASURE(`return_rate`)"
+                    },
+                    {
+                      "name": "return_rate_py",
+                      "expression": "MEASURE(`return_rate_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "return_rate",
+                  "displayName": "Return rate",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "return_rate_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Return rate"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_discount_rate",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "discount_rate",
+                      "expression": "MEASURE(`discount_rate`)"
+                    },
+                    {
+                      "name": "discount_rate_py",
+                      "expression": "MEASURE(`discount_rate_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "discount_rate",
+                  "displayName": "Discount rate",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "discount_rate_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Discount rate"
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "net_sales_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "net_sales",
+                      "expression": "MEASURE(`net_sales`)"
+                    },
+                    {
+                      "name": "net_sales_py",
+                      "expression": "MEASURE(`net_sales_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "net_sales",
+                      "displayName": "Net sales"
+                    },
+                    {
+                      "fieldName": "net_sales_py",
+                      "displayName": "Net sales LY"
+                    }
+                  ]
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Net sales vs last year"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "sssg_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "same_store_sales_growth",
+                      "expression": "MEASURE(`same_store_sales_growth`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "same_store_sales_growth",
+                  "displayName": "SSSG",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Same-store sales growth by month"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "margin_by_category",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "category_metrics",
+                  "fields": [
+                    {
+                      "name": "category",
+                      "expression": "`category`"
+                    },
+                    {
+                      "name": "gross_margin_pct",
+                      "expression": "MEASURE(`gross_margin_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "category",
+                  "displayName": "Category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "gross_margin_pct",
+                  "displayName": "Gross margin %",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Gross margin % by category"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "net_sales_by_category",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "category_metrics",
+                  "fields": [
+                    {
+                      "name": "category",
+                      "expression": "`category`"
+                    },
+                    {
+                      "name": "net_sales",
+                      "expression": "MEASURE(`net_sales`)"
+                    },
+                    {
+                      "name": "net_sales_py",
+                      "expression": "MEASURE(`net_sales_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "category",
+                  "displayName": "Category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "net_sales",
+                      "displayName": "Net sales"
+                    },
+                    {
+                      "fieldName": "net_sales_py",
+                      "displayName": "Net sales LY"
+                    }
+                  ]
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Net sales by category"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 11,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "store_sales_scorecard",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    },
+                    {
+                      "name": "comparable_status",
+                      "expression": "`comparable_status`"
+                    },
+                    {
+                      "name": "net_sales",
+                      "expression": "MEASURE(`net_sales`)"
+                    },
+                    {
+                      "name": "net_sales_yoy",
+                      "expression": "MEASURE(`net_sales_yoy`)"
+                    },
+                    {
+                      "name": "same_store_sales_growth",
+                      "expression": "MEASURE(`same_store_sales_growth`)"
+                    },
+                    {
+                      "name": "gross_margin",
+                      "expression": "MEASURE(`gross_margin`)"
+                    },
+                    {
+                      "name": "gross_margin_pct",
+                      "expression": "MEASURE(`gross_margin_pct`)"
+                    },
+                    {
+                      "name": "gross_margin_pct_yoy_pts",
+                      "expression": "MEASURE(`gross_margin_pct_yoy_pts`)"
+                    },
+                    {
+                      "name": "sales_per_m2",
+                      "expression": "MEASURE(`sales_per_m2`)"
+                    },
+                    {
+                      "name": "sales_per_m2_yoy",
+                      "expression": "MEASURE(`sales_per_m2_yoy`)"
+                    },
+                    {
+                      "name": "return_rate",
+                      "expression": "MEASURE(`return_rate`)"
+                    },
+                    {
+                      "name": "discount_rate",
+                      "expression": "MEASURE(`discount_rate`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "store_name",
+                    "displayName": "Store"
+                  },
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region"
+                  },
+                  {
+                    "fieldName": "comparable_status",
+                    "displayName": "Comparable"
+                  },
+                  {
+                    "fieldName": "net_sales",
+                    "displayName": "Net sales",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "net_sales_yoy",
+                    "displayName": "Net sales YoY",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "same_store_sales_growth",
+                    "displayName": "SSSG",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "gross_margin",
+                    "displayName": "Gross margin",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "gross_margin_pct",
+                    "displayName": "GM %",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "gross_margin_pct_yoy_pts",
+                    "displayName": "GM % YoY (pts)",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "sales_per_m2",
+                    "displayName": "Sales / m²",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "sales_per_m2_yoy",
+                    "displayName": "Sales / m² YoY",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "return_rate",
+                    "displayName": "Return rate",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "discount_rate",
+                    "displayName": "Discount rate",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Store sales scorecard"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 6,
+            "height": 7
+          }
+        }
+      ]
+    },
+    {
+      "name": "store_performance",
+      "displayName": "Store performance",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "store_filter_month",
+            "queries": [
+              {
+                "name": "filter_month_store_metrics",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "month",
+                    "displayName": "Month",
+                    "queryName": "filter_month_store_metrics"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Month"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "store_filter_region",
+            "queries": [
+              {
+                "name": "filter_region_store_metrics",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region",
+                    "queryName": "filter_region_store_metrics"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Region"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "store_filter_store",
+            "queries": [
+              {
+                "name": "filter_store_name_store_metrics",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "store_name",
+                    "displayName": "Store",
+                    "queryName": "filter_store_name_store_metrics"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Store"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_traffic",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "traffic",
+                      "expression": "MEASURE(`traffic`)"
+                    },
+                    {
+                      "name": "traffic_py",
+                      "expression": "MEASURE(`traffic_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "traffic",
+                  "displayName": "Traffic",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "traffic_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Traffic"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_transactions",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "transactions",
+                      "expression": "MEASURE(`transactions`)"
+                    },
+                    {
+                      "name": "transactions_py",
+                      "expression": "MEASURE(`transactions_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "transactions",
+                  "displayName": "Transactions",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "transactions_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Transactions"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_conversion",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "conversion_rate",
+                      "expression": "MEASURE(`conversion_rate`)"
+                    },
+                    {
+                      "name": "conversion_rate_py",
+                      "expression": "MEASURE(`conversion_rate_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "conversion_rate",
+                  "displayName": "Conversion rate",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "conversion_rate_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Conversion rate"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_atv",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "atv",
+                      "expression": "MEASURE(`atv`)"
+                    },
+                    {
+                      "name": "atv_py",
+                      "expression": "MEASURE(`atv_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "atv",
+                  "displayName": "ATV",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "atv_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "ATV"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_upt",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "upt",
+                      "expression": "MEASURE(`upt`)"
+                    },
+                    {
+                      "name": "upt_py",
+                      "expression": "MEASURE(`upt_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "upt",
+                  "displayName": "UPT",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "upt_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "UPT"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_asp",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "asp",
+                      "expression": "MEASURE(`asp`)"
+                    },
+                    {
+                      "name": "asp_py",
+                      "expression": "MEASURE(`asp_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "asp",
+                  "displayName": "ASP",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "target": {
+                  "fieldName": "asp_py",
+                  "displayName": "Last year",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "ASP"
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "traffic_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "traffic",
+                      "expression": "MEASURE(`traffic`)"
+                    },
+                    {
+                      "name": "traffic_py",
+                      "expression": "MEASURE(`traffic_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "traffic",
+                      "displayName": "Traffic"
+                    },
+                    {
+                      "fieldName": "traffic_py",
+                      "displayName": "Traffic LY"
+                    }
+                  ]
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Traffic vs last year"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "conversion_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "conversion_rate",
+                      "expression": "MEASURE(`conversion_rate`)"
+                    },
+                    {
+                      "name": "conversion_rate_py",
+                      "expression": "MEASURE(`conversion_rate_py`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "Month",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "conversion_rate",
+                      "displayName": "Conversion"
+                    },
+                    {
+                      "fieldName": "conversion_rate_py",
+                      "displayName": "Conversion LY"
+                    }
+                  ]
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Conversion rate vs last year"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "atv_by_store",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "atv",
+                      "expression": "MEASURE(`atv`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "store_name",
+                  "displayName": "Store Name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "atv",
+                  "displayName": "ATV",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "ATV by store"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 2,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "upt_by_store",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "upt",
+                      "expression": "MEASURE(`upt`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "store_name",
+                  "displayName": "Store Name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "upt",
+                  "displayName": "UPT",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "UPT by store"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 11,
+            "width": 2,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "asp_by_store",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "asp",
+                      "expression": "MEASURE(`asp`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "store_name",
+                  "displayName": "Store Name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "asp",
+                  "displayName": "ASP",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "ASP by store"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 11,
+            "width": 2,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "store_performance_scorecard",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "store_metrics",
+                  "fields": [
+                    {
+                      "name": "store_name",
+                      "expression": "`store_name`"
+                    },
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    },
+                    {
+                      "name": "traffic",
+                      "expression": "MEASURE(`traffic`)"
+                    },
+                    {
+                      "name": "traffic_yoy",
+                      "expression": "MEASURE(`traffic_yoy`)"
+                    },
+                    {
+                      "name": "conversion_rate",
+                      "expression": "MEASURE(`conversion_rate`)"
+                    },
+                    {
+                      "name": "conversion_rate_yoy_pts",
+                      "expression": "MEASURE(`conversion_rate_yoy_pts`)"
+                    },
+                    {
+                      "name": "atv",
+                      "expression": "MEASURE(`atv`)"
+                    },
+                    {
+                      "name": "atv_yoy",
+                      "expression": "MEASURE(`atv_yoy`)"
+                    },
+                    {
+                      "name": "upt",
+                      "expression": "MEASURE(`upt`)"
+                    },
+                    {
+                      "name": "upt_yoy",
+                      "expression": "MEASURE(`upt_yoy`)"
+                    },
+                    {
+                      "name": "asp",
+                      "expression": "MEASURE(`asp`)"
+                    },
+                    {
+                      "name": "asp_yoy",
+                      "expression": "MEASURE(`asp_yoy`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "store_name",
+                    "displayName": "Store"
+                  },
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region"
+                  },
+                  {
+                    "fieldName": "traffic",
+                    "displayName": "Traffic",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 2
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "traffic_yoy",
+                    "displayName": "Traffic YoY",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "conversion_rate",
+                    "displayName": "Conversion",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "conversion_rate_yoy_pts",
+                    "displayName": "Conversion YoY (pts)",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "atv",
+                    "displayName": "ATV",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "atv_yoy",
+                    "displayName": "ATV YoY",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "upt",
+                    "displayName": "UPT",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 2
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "upt_yoy",
+                    "displayName": "UPT YoY",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "asp",
+                    "displayName": "ASP",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  },
+                  {
+                    "fieldName": "asp_yoy",
+                    "displayName": "ASP YoY",
+                    "format": {
+                      "type": "number-percent",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Store performance scorecard"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 6,
+            "height": 7
+          }
+        }
+      ]
+    }
+  ]
+}

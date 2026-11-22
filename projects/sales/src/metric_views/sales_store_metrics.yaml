@@ -1,0 +1,222 @@
+# Unity Catalog metric view: sales + store-performance KPIs by store and month.
+# Published by the job task `publish_metric_views` as
+#   CREATE OR REPLACE VIEW <catalog>.<gold_schema>.sales_store_metrics WITH METRICS ...
+# This is the single source of truth for KPI formulas (docs/kpi-definitions.md);
+# src/sales/kpis.py restates them so quality checks can verify the results.
+#
+# YoY conventions: *_yoy = relative change (0.05 = +5%); *_yoy_pts = change in
+# percentage points for rates (0.012 = +1.2 pts).
+version: 1.1
+comment: >-
+  Sales and store-performance KPIs per store and month (net sales, same-store sales
+  growth, gross margin, sales per m2, traffic, conversion, ATV, UPT, ASP, return and
+  discount rates) with prior-year values and year-on-year changes.
+source: ${catalog}.${gold_schema}.sales_store_monthly
+
+dimensions:
+  - name: month
+    expr: month
+    display_name: Month
+    comment: First day of the calendar month.
+  - name: year
+    expr: YEAR(month)
+    display_name: Year
+  - name: region
+    expr: region
+    display_name: Region
+  - name: city
+    expr: city
+    display_name: City
+  - name: store_id
+    expr: store_id
+    display_name: Store ID
+  - name: store_name
+    expr: store_name
+    display_name: Store
+  - name: comparable_status
+    expr: CASE WHEN is_comparable THEN 'Comparable' ELSE 'Non-comparable' END
+    display_name: Comparable status
+    comment: Comparable once the store has traded 12 full months before the month.
+
+measures:
+  # ---------------------------------------------------------------- base (additive)
+  - name: gross_sales
+    expr: SUM(gross_sales)
+    display_name: Gross sales
+  - name: discounts
+    expr: SUM(discounts)
+    display_name: Discounts
+  - name: returns
+    expr: SUM(returns)
+    display_name: Returns
+  - name: net_sales
+    expr: SUM(net_sales)
+    display_name: Net sales
+    comment: Gross sales minus discounts minus returns, excluding VAT.
+    synonyms: [revenue, sales, turnover]
+  - name: cogs
+    expr: SUM(cogs)
+    display_name: Cost of goods sold
+  - name: gross_margin
+    expr: MEASURE(net_sales) - MEASURE(cogs)
+    display_name: Gross margin
+    synonyms: [gross profit]
+  - name: selling_area_m2
+    expr: SUM(selling_area_m2)
+    display_name: Selling area (m2 x months)
+    comment: Summed per store-month row; denominator for sales per m2.
+  - name: traffic
+    expr: SUM(traffic)
+    display_name: Traffic
+    comment: Visitors counted by store door counters.
+    synonyms: [footfall, visitors]
+  - name: transactions
+    expr: SUM(transactions)
+    display_name: Transactions
+    comment: Number of sales receipts (returns excluded).
+  - name: units_sold
+    expr: SUM(units_sold)
+    display_name: Units sold
+
+  # ---------------------------------------------------------------- KPIs
+  - name: gross_margin_pct
+    expr: MEASURE(gross_margin) / NULLIF(MEASURE(net_sales), 0)
+    display_name: Gross margin %
+  - name: sales_per_m2
+    expr: MEASURE(net_sales) / NULLIF(MEASURE(selling_area_m2), 0)
+    display_name: Sales per m2
+    comment: Monthly net sales per m2 of selling area (average per store-month across a selection).
+  - name: conversion_rate
+    expr: MEASURE(transactions) / NULLIF(MEASURE(traffic), 0)
+    display_name: Conversion rate
+    synonyms: [conversion]
+  - name: atv
+    expr: MEASURE(net_sales) / NULLIF(MEASURE(transactions), 0)
+    display_name: ATV
+    comment: Average transaction value = net sales / transactions.
+    synonyms: [average transaction value, average basket value]
+  - name: upt
+    expr: MEASURE(units_sold) / NULLIF(MEASURE(transactions), 0)
+    display_name: UPT
+    comment: Units per transaction.
+    synonyms: [units per transaction, basket size]
+  - name: asp
+    expr: MEASURE(net_sales) / NULLIF(MEASURE(units_sold), 0)
+    display_name: ASP
+    comment: Average selling price = net sales / units sold (so ATV = UPT x ASP).
+    synonyms: [average selling price, average unit retail]
+  - name: return_rate
+    expr: MEASURE(returns) / NULLIF(MEASURE(gross_sales), 0)
+    display_name: Return rate
+  - name: discount_rate
+    expr: MEASURE(discounts) / NULLIF(MEASURE(gross_sales), 0)
+    display_name: Discount rate
+
+  # ---------------------------------------------------------------- same-store sales growth
+  - name: comp_net_sales
+    expr: SUM(net_sales) FILTER (WHERE is_comparable AND net_sales_py IS NOT NULL)
+    display_name: Comparable-store net sales
+  - name: comp_net_sales_py
+    expr: SUM(net_sales_py) FILTER (WHERE is_comparable AND net_sales_py IS NOT NULL)
+    display_name: Comparable-store net sales LY
+  - name: same_store_sales_growth
+    expr: MEASURE(comp_net_sales) / NULLIF(MEASURE(comp_net_sales_py), 0) - 1
+    display_name: Same-store sales growth
+    comment: Comparable stores only (12+ full months trading), same days last year.
+    synonyms: [SSSG, like-for-like growth, LFL, comparable sales growth]
+
+  # ---------------------------------------------------------------- prior year (base)
+  - name: gross_sales_py
+    expr: SUM(gross_sales_py)
+    display_name: Gross sales LY
+  - name: discounts_py
+    expr: SUM(discounts_py)
+    display_name: Discounts LY
+  - name: returns_py
+    expr: SUM(returns_py)
+    display_name: Returns LY
+  - name: net_sales_py
+    expr: SUM(net_sales_py)
+    display_name: Net sales LY
+  - name: cogs_py
+    expr: SUM(cogs_py)
+    display_name: COGS LY
+  - name: gross_margin_py
+    expr: MEASURE(net_sales_py) - MEASURE(cogs_py)
+    display_name: Gross margin LY
+  - name: selling_area_m2_py
+    expr: SUM(selling_area_m2_py)
+    display_name: Selling area LY (m2 x months)
+  - name: traffic_py
+    expr: SUM(traffic_py)
+    display_name: Traffic LY
+  - name: transactions_py
+    expr: SUM(transactions_py)
+    display_name: Transactions LY
+  - name: units_sold_py
+    expr: SUM(units_sold_py)
+    display_name: Units sold LY
+
+  # ---------------------------------------------------------------- prior year (KPIs)
+  - name: gross_margin_pct_py
+    expr: MEASURE(gross_margin_py) / NULLIF(MEASURE(net_sales_py), 0)
+    display_name: Gross margin % LY
+  - name: sales_per_m2_py
+    expr: MEASURE(net_sales_py) / NULLIF(MEASURE(selling_area_m2_py), 0)
+    display_name: Sales per m2 LY
+  - name: conversion_rate_py
+    expr: MEASURE(transactions_py) / NULLIF(MEASURE(traffic_py), 0)
+    display_name: Conversion rate LY
+  - name: atv_py
+    expr: MEASURE(net_sales_py) / NULLIF(MEASURE(transactions_py), 0)
+    display_name: ATV LY
+  - name: upt_py
+    expr: MEASURE(units_sold_py) / NULLIF(MEASURE(transactions_py), 0)
+    display_name: UPT LY
+  - name: asp_py
+    expr: MEASURE(net_sales_py) / NULLIF(MEASURE(units_sold_py), 0)
+    display_name: ASP LY
+  - name: return_rate_py
+    expr: MEASURE(returns_py) / NULLIF(MEASURE(gross_sales_py), 0)
+    display_name: Return rate LY
+  - name: discount_rate_py
+    expr: MEASURE(discounts_py) / NULLIF(MEASURE(gross_sales_py), 0)
+    display_name: Discount rate LY
+
+  # ---------------------------------------------------------------- year-on-year
+  - name: net_sales_yoy
+    expr: MEASURE(net_sales) / NULLIF(MEASURE(net_sales_py), 0) - 1
+    display_name: Net sales YoY
+  - name: gross_margin_yoy
+    expr: MEASURE(gross_margin) / NULLIF(MEASURE(gross_margin_py), 0) - 1
+    display_name: Gross margin YoY
+  - name: gross_margin_pct_yoy_pts
+    expr: MEASURE(gross_margin_pct) - MEASURE(gross_margin_pct_py)
+    display_name: Gross margin % YoY (pts)
+  - name: sales_per_m2_yoy
+    expr: MEASURE(sales_per_m2) / NULLIF(MEASURE(sales_per_m2_py), 0) - 1
+    display_name: Sales per m2 YoY
+  - name: traffic_yoy
+    expr: MEASURE(traffic) / NULLIF(MEASURE(traffic_py), 0) - 1
+    display_name: Traffic YoY
+  - name: transactions_yoy
+    expr: MEASURE(transactions) / NULLIF(MEASURE(transactions_py), 0) - 1
+    display_name: Transactions YoY
+  - name: conversion_rate_yoy_pts
+    expr: MEASURE(conversion_rate) - MEASURE(conversion_rate_py)
+    display_name: Conversion rate YoY (pts)
+  - name: atv_yoy
+    expr: MEASURE(atv) / NULLIF(MEASURE(atv_py), 0) - 1
+    display_name: ATV YoY
+  - name: upt_yoy
+    expr: MEASURE(upt) / NULLIF(MEASURE(upt_py), 0) - 1
+    display_name: UPT YoY
+  - name: asp_yoy
+    expr: MEASURE(asp) / NULLIF(MEASURE(asp_py), 0) - 1
+    display_name: ASP YoY
+  - name: return_rate_yoy_pts
+    expr: MEASURE(return_rate) - MEASURE(return_rate_py)
+    display_name: Return rate YoY (pts)
+  - name: discount_rate_yoy_pts
+    expr: MEASURE(discount_rate) - MEASURE(discount_rate_py)
+    display_name: Discount rate YoY (pts)

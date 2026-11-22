@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 475" width="1000" height="475" role="img" aria-labelledby="t d">
+  <title id="t">CI/CD flow</title>
+  <desc id="d">Feature branches go through CI into develop, which deploys affected projects to DEV automatically. A pull request from develop to main runs CI again; merging to main waits for manual approval in the GitHub prod environment before deploying to PROD. Rollback re-runs the PROD deployment with a release tag.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 18px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0f172a; }
+      .lane { font: 700 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #475569; letter-spacing: .04em; }
+      .h { font: 700 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0f172a; }
+      .b { font: 400 11.5px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #334155; }
+      .edge { stroke: #475569; stroke-width: 1.6; fill: none; }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1000" height="475" rx="14" fill="#ffffff"/>
+  <text class="title" x="20" y="32">CI/CD flow (GitHub Actions → Databricks Asset Bundles)</text>
+
+  <text class="lane" x="20" y="62">DEVELOP → DEV (AUTOMATIC)</text>
+  <rect x="20" y="72" width="215" height="100" rx="8" fill="#f8fafc" stroke="#475569"/>
+  <text class="h" x="127" y="97" text-anchor="middle">1. Feature branch</text>
+  <text class="b" x="127" y="120" text-anchor="middle">VS Code · pytest · ruff</text>
+  <text class="b" x="127" y="138" text-anchor="middle">bundle.sh sales dev validate</text>
+  <text class="b" x="127" y="156" text-anchor="middle">(optional manual dev deploy)</text>
+
+  <rect x="268" y="72" width="215" height="100" rx="8" fill="#eef4ff" stroke="#3563c9"/>
+  <text class="h" x="375" y="97" text-anchor="middle">2. PR → develop: ci.yml</text>
+  <text class="b" x="375" y="120" text-anchor="middle">ruff · pytest (all)</text>
+  <text class="b" x="375" y="138" text-anchor="middle">bundle validate dev + prod</text>
+  <text class="b" x="375" y="156" text-anchor="middle">affected projects only</text>
+
+  <rect x="516" y="72" width="215" height="100" rx="8" fill="#eef4ff" stroke="#3563c9"/>
+  <text class="h" x="623" y="97" text-anchor="middle">3. Merge: deploy-dev.yml</text>
+  <text class="b" x="623" y="120" text-anchor="middle">changed since tag</text>
+  <text class="b" x="623" y="138" text-anchor="middle">deploy/dev/&lt;project&gt;</text>
+  <text class="b" x="623" y="156" text-anchor="middle">one project at a time</text>
+
+  <rect x="764" y="72" width="215" height="100" rx="8" fill="#e7f6ee" stroke="#2a8c55"/>
+  <text class="h" x="871" y="97" text-anchor="middle">4. DEV (catalog dev)</text>
+  <text class="b" x="871" y="120" text-anchor="middle">validate → deploy → run job</text>
+  <text class="b" x="871" y="138" text-anchor="middle">→ verify dashboard queries</text>
+  <text class="b" x="871" y="156" text-anchor="middle">→ move tag deploy/dev/&lt;p&gt;</text>
+
+  <path class="edge" d="M235 122 H266" marker-end="url(#arrow)"/>
+  <path class="edge" d="M483 122 H514" marker-end="url(#arrow)"/>
+  <path class="edge" d="M731 122 H762" marker-end="url(#arrow)"/>
+
+  <path class="edge" d="M871 172 V205 H127 V248" marker-end="url(#arrow)"/>
+
+  <text class="lane" x="142" y="242">MAIN → PROD (MANUAL APPROVAL)</text>
+  <rect x="20" y="252" width="215" height="100" rx="8" fill="#eef4ff" stroke="#3563c9"/>
+  <text class="h" x="127" y="277" text-anchor="middle">5. PR develop → main</text>
+  <text class="b" x="127" y="300" text-anchor="middle">same CI checks</text>
+  <text class="b" x="127" y="318" text-anchor="middle">branch ruleset: PR +</text>
+  <text class="b" x="127" y="336" text-anchor="middle">green CI required</text>
+
+  <rect x="268" y="252" width="215" height="100" rx="8" fill="#eef4ff" stroke="#3563c9"/>
+  <text class="h" x="375" y="277" text-anchor="middle">6. Merge: deploy-prod.yml</text>
+  <text class="b" x="375" y="300" text-anchor="middle">changed since tag</text>
+  <text class="b" x="375" y="318" text-anchor="middle">deploy/prod/&lt;project&gt;</text>
+  <text class="b" x="375" y="336" text-anchor="middle">unrelated projects skipped</text>
+
+  <rect x="516" y="252" width="215" height="100" rx="8" fill="#fff4e5" stroke="#c77700"/>
+  <text class="h" x="623" y="277" text-anchor="middle">7. Approval gate</text>
+  <text class="b" x="623" y="300" text-anchor="middle">GitHub Environment "prod"</text>
+  <text class="b" x="623" y="318" text-anchor="middle">required reviewer</text>
+  <text class="b" x="623" y="336" text-anchor="middle">(public repo, free plan)</text>
+
+  <rect x="764" y="252" width="215" height="100" rx="8" fill="#e7f6ee" stroke="#2a8c55"/>
+  <text class="h" x="871" y="277" text-anchor="middle">8. PROD (catalog prod)</text>
+  <text class="b" x="871" y="300" text-anchor="middle">validate → deploy → run job</text>
+  <text class="b" x="871" y="318" text-anchor="middle">→ verify → deploy/prod/&lt;p&gt;</text>
+  <text class="b" x="871" y="336" text-anchor="middle">+ release/&lt;p&gt;/&lt;timestamp&gt;</text>
+
+  <path class="edge" d="M235 302 H266" marker-end="url(#arrow)"/>
+  <path class="edge" d="M483 302 H514" marker-end="url(#arrow)"/>
+  <path class="edge" d="M731 302 H762" marker-end="url(#arrow)"/>
+
+  <rect x="516" y="390" width="463" height="62" rx="8" fill="#fdf2f2" stroke="#b42318" stroke-dasharray="5 3"/>
+  <text class="h" x="747" y="414" text-anchor="middle">Rollback (one project)</text>
+  <text class="b" x="747" y="436" text-anchor="middle">Run "Deploy PROD" manually: project = sales, ref = release/sales/&lt;timestamp&gt;</text>
+  <path class="edge" d="M871 390 V354" marker-end="url(#arrow)"/>
+  <text class="b" x="20" y="414">All logic lives in scripts/ (bundle.sh, changed_projects.py,</text>
+  <text class="b" x="20" y="432">verify_dashboards.py); workflows only call them, which keeps</text>
+  <text class="b" x="20" y="450">a future GitLab CI migration to a YAML rewrite.</text>
+</svg>

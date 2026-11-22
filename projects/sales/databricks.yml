@@ -1,0 +1,68 @@
+# Databricks Asset Bundle for the "sales" project.
+# Deployed independently of other projects: scripts/bundle.sh sales <dev|prod> <command>
+#
+# No workspace host or credentials here: the CLI reads DATABRICKS_HOST/DATABRICKS_TOKEN
+# (CI) or a local profile via DATABRICKS_CONFIG_PROFILE, which keeps this file portable.
+bundle:
+  name: sales
+
+include:
+  - resources/*.yml
+
+sync:
+  # Ship the shared Python package with the bundle. Because a path outside the bundle
+  # root is included, the sync root becomes the repo root and files land under
+  # ${workspace.file_path}/projects/sales/... and ${workspace.file_path}/shared/python/...
+  paths:
+    - .
+    - ../../shared/python
+  exclude:
+    - tests/**
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for this environment (dev or prod).
+  bronze_schema:
+    description: Schema for raw landing tables.
+    default: bronze
+  silver_schema:
+    description: Schema for cleaned tables.
+    default: silver
+  gold_schema:
+    description: Schema for base-measure tables and metric views.
+    default: gold
+  warehouse_id:
+    description: SQL warehouse used by the dashboard (Free Edition has exactly one).
+    lookup:
+      warehouse: Serverless Starter Warehouse
+  sample_start_date:
+    description: First business day of the synthetic dataset (>= 13 months of history for YoY/SSSG).
+    default: "2025-08-01"
+
+targets:
+  dev:
+    default: true
+    # Shared DEV environment deployed by CI from the develop branch.
+    presets:
+      trigger_pause_status: PAUSED
+      tags:
+        project: sales
+        environment: dev
+    variables:
+      catalog: dev
+
+  prod:
+    mode: production
+    presets:
+      tags:
+        project: sales
+        environment: prod
+    variables:
+      catalog: prod
+    # Free Edition PoC deploys with a personal access token, so the deploying user is
+    # the run-as identity. Swap for a service principal when one is available.
+    run_as:
+      user_name: ${workspace.current_user.userName}
+    permissions:
+      - level: CAN_MANAGE
+        user_name: ${workspace.current_user.userName}

@@ -1,0 +1,130 @@
+# Table registry for the sales project — executed by platform_common.tables.
+#
+# * Logic lives in the SQL files (SELECT only); this file declares each table's layer,
+#   write mode and data-quality rules.
+# * Tables are built top to bottom, so a table may only read tables listed above it.
+# * All tables are plain managed Delta tables: no streaming tables, no pipelines.
+# * Adding a table = one SQL file + one entry here. Removing an entry does NOT drop the
+#   table; drop it explicitly if it is no longer needed.
+
+settings:
+  catalog: catalog
+  schemas:
+    bronze: bronze_schema
+    silver: silver_schema
+    gold: gold_schema
+
+tables:
+  # ------------------------------------------------------------------ bronze (raw)
+  - name: sales_transactions_raw
+    layer: bronze
+    comment: Raw POS receipts (sales and returns) with nested lines, loaded file by file from the landing volume.
+    files: transactions
+    format: json
+    schema: >-
+      txn_id STRING, store_id STRING, business_date DATE, txn_ts TIMESTAMP,
+      txn_type STRING, original_txn_id STRING,
+      lines ARRAY<STRUCT<line_no: INT, product_id: STRING, quantity: INT,
+      unit_price: DECIMAL(12,2), discount_amount: DECIMAL(12,2), unit_cost: DECIMAL(12,2)>>
+    write: append_new_files
+
+  - name: sales_store_traffic_raw
+    layer: bronze
+    comment: Raw daily door-counter visitor counts per store.
+    files: traffic
+    format: json
+    schema: store_id STRING, business_date DATE, visitors INT
+    write: append_new_files
+
+  - name: sales_stores_raw
+    layer: bronze
+    comment: Raw store master data (full reload each run).
+    files: stores
+    format: json
+    schema: >-
+      store_id STRING, store_name STRING, region STRING, city STRING,
+      selling_area_m2 INT, open_date DATE
+    write: replace
+
+  - name: sales_products_raw
+    layer: bronze
+    comment: Raw product master data (full reload each run).
+    files: products
+    format: json
+    schema: >-
+      product_id STRING, product_name STRING, category STRING,
+      unit_price DECIMAL(12,2), unit_cost DECIMAL(12,2)
+    write: replace
+
+  # ------------------------------------------------------------------ silver (clean)
+  - name: sales_stores
+    layer: silver
+    comment: Store master data, one row per store, with selling area (m2) and open date.
+    sql: silver/sales_stores.sql
+    write: merge
+    keys: [store_id]
+    expect_or_fail:
+      store_id_present: store_id IS NOT NULL
+      open_date_present: open_date IS NOT NULL
+      selling_area_positive: selling_area_m2 > 0
+
+  - name: sales_products
+    layer: silver
+    comment: Product master data, one row per product, with category, list price and unit cost.
+    sql: silver/sales_products.sql
+    write: merge
+    keys: [product_id]
+    expect_or_fail:
+      product_id_present: product_id IS NOT NULL
+      category_present: category IS NOT NULL
+      cost_not_above_price: unit_cost <= unit_price
+
+  - name: sales_transaction_lines
+    layer: silver
+    comment: One row per receipt line; amounts are positive for sales and returns, txn_type tells them apart.
+    sql: silver/sales_transaction_lines.sql
+    write: merge
+    keys: [txn_id, line_no]
+    expect_or_drop:
+      txn_id_present: txn_id IS NOT NULL
+      store_id_present: store_id IS NOT NULL
+      valid_txn_type: txn_type IN ('SALE', 'RETURN')
+      positive_quantity: quantity > 0
+      valid_discount: discount_amount BETWEEN 0 AND gross_amount
+      return_has_original: txn_type <> 'RETURN' OR original_txn_id IS NOT NULL
+
+  - name: sales_store_traffic
+    layer: silver
+    comment: Daily visitors (door counter) per store.
+    sql: silver/sales_store_traffic.sql
+    write: merge
+    keys: [store_id, business_date]
+    expect_or_drop:
+      store_id_present: store_id IS NOT NULL
+      business_date_present: business_date IS NOT NULL
+      visitors_non_negative: visitors >= 0
+
+  # ------------------------------------------------------------------ gold (base measures)
+  # Additive measures only. KPI ratios live in the metric views (src/metric_views).
+  - name: sales_store_daily
+    layer: gold
+    comment: Additive sales and footfall measures per store and business day.
+    sql: gold/sales_store_daily.sql
+    write: replace
+    expect_or_fail:
+      net_sales_reconciles: abs(net_sales - (gross_sales - discounts - returns)) < 0.005
+
+  - name: sales_store_monthly
+    layer: gold
+    comment: Base measures per store and month with comparable flag and like-for-like prior-year measures. Source of the sales_store_metrics metric view.
+    sql: gold/sales_store_monthly.sql
+    write: replace
+    expect_or_fail:
+      selling_area_positive: selling_area_m2 > 0
+      comparable_flag_present: is_comparable IS NOT NULL
+
+  - name: sales_category_monthly
+    layer: gold
+    comment: Base measures per store, product category and month with like-for-like prior-year measures. Source of the sales_category_metrics metric view.
+    sql: gold/sales_category_monthly.sql
+    write: replace

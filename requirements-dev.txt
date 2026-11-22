@@ -1,0 +1,4 @@
+# Local + CI tooling (not deployed to Databricks). Pinned for reproducible CI.
+pytest==9.2.0
+ruff==0.17.6
+PyYAML==6.0.4
