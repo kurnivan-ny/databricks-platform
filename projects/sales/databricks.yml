@@ -40,9 +40,16 @@ variables:
     default: "2025-08-01"
 
 targets:
+  # Deployed code lives in one platform folder (not a user's home, not /Shared):
+  #   /Workspace/databricks-platform/<target>/<project>
   dev:
     default: true
     # Shared DEV environment deployed by CI from the develop branch.
+    workspace:
+      root_path: /Workspace/databricks-platform/dev/${bundle.name}
+    permissions:
+      - level: CAN_MANAGE
+        group_name: users
     presets:
       trigger_pause_status: PAUSED
       tags:
@@ -53,6 +60,8 @@ targets:
 
   prod:
     mode: production
+    workspace:
+      root_path: /Workspace/databricks-platform/prod/${bundle.name}
     presets:
       tags:
         project: sales
@@ -63,6 +72,9 @@ targets:
     # the run-as identity. Swap for a service principal when one is available.
     run_as:
       user_name: ${workspace.current_user.userName}
+    # Only the deploying identity may change PROD; everyone else can view it.
     permissions:
       - level: CAN_MANAGE
         user_name: ${workspace.current_user.userName}
+      - level: CAN_VIEW
+        group_name: users

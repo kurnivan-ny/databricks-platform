@@ -2,7 +2,9 @@
 
 Retail sales and store-performance analytics on synthetic POS and door-counter data.
 
-* **Bundle:** `sales`, with targets `dev` (catalog `dev`) and `prod` (catalog `prod`).
+* **Bundle:** `sales`, with targets `dev` (catalog `dev`, folder
+  `/Workspace/databricks-platform/dev/sales`) and `prod` (catalog `prod`, folder
+  `/Workspace/databricks-platform/prod/sales`).
 * **Job `[<target>] sales_daily`:** serverless, daily at 06:00 UTC, paused in dev. It runs
   these tasks in order:
   1. `generate_data`

@@ -1,83 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 492" width="1000" height="492" role="img" aria-labelledby="t d">
-  <title id="t">Platform architecture</title>
-  <desc id="d">Local development with VS Code, Python and the Databricks CLI pushes to a GitHub monorepo. GitHub Actions on hosted runners deploy each project bundle with a personal access token stored in GitHub Secrets into a single Databricks Free Edition workspace, where Unity Catalog catalogs dev and prod separate the environments.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1064 488" width="1064" height="488" role="img" aria-label="Platform architecture: local development pushes to a public GitHub repository; GitHub Actions, gated by environments and using secrets, deploys and runs each project bundle in a single Databricks Free Edition workspace, where the job writes Unity Catalog tables and metric views that the AI/BI dashboard queries. Local manual deploys go to dev only." font-family="'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <title>Platform architecture</title>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
     </marker>
-    <style>
-      .title { font: 700 18px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0f172a; }
-      .group { font: 700 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0f172a; }
-      .h { font: 700 12.5px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0f172a; }
-      .b { font: 400 11.5px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #334155; }
-      .label { font: 400 11.5px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #475569; }
-      .edge { stroke: #475569; stroke-width: 1.6; fill: none; }
-      .item { fill: #ffffff; stroke: #cbd5e1; }
-    </style>
   </defs>
-  <rect x="0" y="0" width="1000" height="492" rx="14" fill="#ffffff"/>
-  <text class="title" x="20" y="32">Architecture — local-first, one Free Edition workspace</text>
+  <rect width="1064" height="488" rx="16" fill="#ffffff"/>
+  <text x="24" y="40" font-size="18" font-weight="700" fill="#0f172a">Platform architecture</text>
+  <text x="24" y="60" font-size="12" fill="#64748b">local-first · one Databricks Free Edition workspace · catalogs dev and prod</text>
 
-  <!-- Local -->
-  <rect x="20" y="52" width="216" height="378" rx="10" fill="#f8fafc" stroke="#94a3b8"/>
-  <text class="group" x="36" y="76">Local development</text>
-  <rect class="item" x="34" y="90" width="188" height="58" rx="6"/>
-  <text class="h" x="46" y="112">VS Code</text>
-  <text class="b" x="46" y="132">Databricks + Python extensions</text>
-  <rect class="item" x="34" y="158" width="188" height="58" rx="6"/>
-  <text class="h" x="46" y="180">Python venv</text>
-  <text class="b" x="46" y="200">pytest · ruff · PyYAML</text>
-  <rect class="item" x="34" y="226" width="188" height="58" rx="6"/>
-  <text class="h" x="46" y="248">Databricks CLI 1.23.0</text>
-  <text class="b" x="46" y="268">PAT profile (local only)</text>
-  <rect class="item" x="34" y="294" width="188" height="58" rx="6"/>
-  <text class="h" x="46" y="316">scripts/bundle.sh</text>
-  <text class="b" x="46" y="336">validate · deploy · run · verify</text>
+  <!-- zones -->
+  <rect x="24" y="80" width="248" height="352" rx="12" fill="#f8fafc" stroke="#94a3b8"/>
+  <rect x="344" y="80" width="320" height="352" rx="12" fill="#f6f8fa" stroke="#94a3b8"/>
+  <rect x="736" y="80" width="304" height="352" rx="12" fill="#fff7f3" stroke="#e0a084"/>
+  <g font-size="13" font-weight="700" fill="#0f172a">
+    <text x="40" y="106">Local development</text>
+    <text x="360" y="106">GitHub · free plan</text>
+    <text x="752" y="106">Databricks Free Edition</text>
+  </g>
 
-  <!-- GitHub -->
-  <rect x="300" y="52" width="300" height="378" rx="10" fill="#f6f8fa" stroke="#94a3b8"/>
-  <text class="group" x="316" y="76">GitHub (free plan, public repo)</text>
-  <rect class="item" x="314" y="90" width="272" height="72" rx="6"/>
-  <text class="h" x="326" y="112">Monorepo</text>
-  <text class="b" x="326" y="131">projects/sales (own bundle) · shared/</text>
-  <text class="b" x="326" y="149">scripts/ · branches develop, main</text>
-  <rect class="item" x="314" y="172" width="272" height="72" rx="6"/>
-  <text class="h" x="326" y="194">Actions (GitHub-hosted runners)</text>
-  <text class="b" x="326" y="213">ci.yml · deploy-dev.yml · deploy-prod.yml</text>
-  <text class="b" x="326" y="231">→ reusable _deploy.yml</text>
-  <rect class="item" x="314" y="254" width="272" height="72" rx="6"/>
-  <text class="h" x="326" y="276">Environments</text>
-  <text class="b" x="326" y="295">dev: branch develop</text>
-  <text class="b" x="326" y="313">prod: branch main + required reviewer</text>
-  <rect class="item" x="314" y="336" width="272" height="80" rx="6"/>
-  <text class="h" x="326" y="358">Secrets (no credentials in code)</text>
-  <text class="b" x="326" y="377">repo: DATABRICKS_HOST, DATABRICKS_TOKEN</text>
-  <text class="b" x="326" y="395">prod env: DATABRICKS_TOKEN (own PAT)</text>
-
-  <!-- Databricks -->
-  <rect x="650" y="52" width="330" height="378" rx="10" fill="#fff7f3" stroke="#d1856a"/>
-  <text class="group" x="666" y="76">Databricks Free Edition (1 workspace)</text>
-  <rect class="item" x="664" y="90" width="302" height="58" rx="6"/>
-  <text class="h" x="676" y="112">Bundle deployments per target</text>
-  <text class="b" x="676" y="132">~/.bundle/sales/dev · ~/.bundle/sales/prod</text>
-  <rect class="item" x="664" y="158" width="302" height="58" rx="6"/>
-  <text class="h" x="676" y="180">Serverless job: [dev|prod] sales_daily</text>
-  <text class="b" x="676" y="200">data → bronze → silver → gold → MVs → checks</text>
-  <rect class="item" x="664" y="226" width="302" height="72" rx="6"/>
-  <text class="h" x="676" y="248">Unity Catalog</text>
-  <text class="b" x="676" y="267">catalogs dev, prod × schemas bronze/silver/gold</text>
-  <text class="b" x="676" y="285">landing volume · Delta tables · metric views</text>
-  <rect class="item" x="664" y="308" width="302" height="58" rx="6"/>
-  <text class="h" x="676" y="330">AI/BI dashboard per target</text>
-  <text class="b" x="676" y="350">reads its own catalog's metric views</text>
-  <rect class="item" x="664" y="376" width="302" height="40" rx="6"/>
-  <text class="b" x="676" y="401">Serverless Starter Warehouse (2X-Small)</text>
+  <!-- items -->
+  <g font-size="12" fill="#475569">
+    <g fill="#ffffff" stroke="#cbd5e1">
+      <rect x="40" y="120" width="216" height="56" rx="8"/>
+      <rect x="40" y="200" width="216" height="56" rx="8"/>
+      <rect x="40" y="280" width="216" height="56" rx="8"/>
+      <rect x="40" y="360" width="216" height="56" rx="8"/>
+      <rect x="360" y="120" width="288" height="56" rx="8"/>
+      <rect x="360" y="200" width="288" height="56" rx="8"/>
+      <rect x="360" y="280" width="288" height="56" rx="8"/>
+      <rect x="360" y="360" width="288" height="56" rx="8"/>
+      <rect x="752" y="120" width="272" height="56" rx="8"/>
+      <rect x="752" y="200" width="272" height="56" rx="8"/>
+      <rect x="752" y="280" width="272" height="56" rx="8"/>
+      <rect x="752" y="360" width="272" height="56" rx="8"/>
+    </g>
+    <g font-size="13" font-weight="700" fill="#0f172a">
+      <text x="56" y="144">VS Code</text>
+      <text x="56" y="224">Python venv</text>
+      <text x="56" y="304">Databricks CLI</text>
+      <text x="56" y="384">scripts/</text>
+      <text x="376" y="144">Repository (public)</text>
+      <text x="376" y="224">Actions</text>
+      <text x="376" y="304">Environments</text>
+      <text x="376" y="384">Secrets</text>
+      <text x="768" y="144">Bundle files</text>
+      <text x="768" y="224">Job &lt;project&gt;_daily</text>
+      <text x="768" y="304">Unity Catalog</text>
+      <text x="768" y="384">AI/BI dashboard</text>
+    </g>
+    <text x="56" y="164">Databricks extension</text>
+    <text x="56" y="244">pytest · ruff · PyYAML</text>
+    <text x="56" y="324">v1.23.0 · PAT profile</text>
+    <text x="56" y="404">bundle.sh · change detection</text>
+    <text x="376" y="164">main · develop · projects/*</text>
+    <text x="376" y="244">ci · deploy-dev · deploy-prod</text>
+    <text x="376" y="324">dev · prod + required reviewer</text>
+    <text x="376" y="404">DATABRICKS_HOST · DATABRICKS_TOKEN</text>
+    <text x="768" y="164">/databricks-platform/{dev,prod}/&lt;project&gt;</text>
+    <text x="768" y="244">serverless · tables → metric views</text>
+    <text x="768" y="324">catalogs dev, prod · bronze/silver/gold</text>
+    <text x="768" y="404">Serverless Starter Warehouse</text>
+  </g>
 
   <!-- edges -->
-  <path class="edge" d="M236 190 H298" marker-end="url(#arrow)"/>
-  <text class="label" x="267" y="182" text-anchor="middle">push/PR</text>
-  <path class="edge" d="M600 208 H662" marker-end="url(#arrow)"/>
-  <text class="label" x="631" y="200" text-anchor="middle">deploy</text>
-  <path class="edge" d="M128 430 V458 H815 V432" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-  <text class="label" x="475" y="478" text-anchor="middle">manual dev validate / deploy from a laptop (same scripts, local PAT profile)</text>
+  <g stroke="#475569" stroke-width="1.6" fill="none">
+    <path d="M272 148 H342" marker-end="url(#arrow)"/>
+    <path d="M664 228 H734" marker-end="url(#arrow)"/>
+    <path d="M448 176 V198" marker-end="url(#arrow)"/>
+    <path d="M560 280 V258" marker-end="url(#arrow)"/>
+    <path d="M800 176 V198" marker-end="url(#arrow)"/>
+    <path d="M800 256 V278" marker-end="url(#arrow)"/>
+    <path d="M800 336 V358" marker-end="url(#arrow)"/>
+    <path d="M148 432 V460 H888 V434" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  </g>
+  <g font-size="11" fill="#475569">
+    <text x="307" y="140" text-anchor="middle">git push</text>
+    <text x="699" y="220" text-anchor="middle">deploy, run</text>
+    <text x="456" y="192">triggers</text>
+    <text x="568" y="272">gates</text>
+    <text x="808" y="192">runs</text>
+    <text x="808" y="272">writes</text>
+    <text x="808" y="352">metric views</text>
+    <text x="518" y="478" text-anchor="middle">manual validate / deploy · dev only</text>
+  </g>
 </svg>
