@@ -1,0 +1,51 @@
+# Merge to develop -> deploy affected projects to DEV and run integration tests.
+name: Deploy DEV
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      projects:
+        description: 'Comma-separated projects or "all". Empty = only projects changed since their last DEV deploy.'
+        required: false
+        default: ""
+
+permissions:
+  contents: write # push deploy/dev/<project> tags
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    name: Detect projects to deploy
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.detect.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: detect
+        env:
+          REQUESTED: ${{ inputs.projects }}
+        run: |
+          if [ -n "$REQUESTED" ]; then
+            python scripts/changed_projects.py select --projects "$REQUESTED" --github-output
+          else
+            python scripts/changed_projects.py deploy --env dev --github-output
+          fi
+
+  deploy:
+    needs: changes
+    if: needs.changes.outputs.projects != '[]'
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      target: dev
+      projects: ${{ needs.changes.outputs.projects }}
+    secrets: inherit

@@ -1,0 +1,21 @@
+# Repo-wide tooling configuration (lint + tests).
+# Each project under projects/ is deployed as its own Databricks Asset Bundle; this file
+# only configures local/CI tooling and is not packaged or deployed.
+[project]
+name = "databricks-platform"
+version = "0.1.0"
+description = "Databricks CI/CD PoC on Free Edition: GitHub Actions + Databricks Asset Bundles"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".build", ".databricks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+addopts = "-q --import-mode=importlib"
+testpaths = ["shared/tests", "scripts/tests", "projects"]
+pythonpath = ["shared/python", "scripts"]

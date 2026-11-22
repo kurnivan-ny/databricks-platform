@@ -1,0 +1,64 @@
+# Merge to main -> manual approval (GitHub Environment "prod") -> deploy affected
+# projects to PROD. Manual runs deploy one project at any ref, which is also how a
+# project is rolled back (pick a release/<project>/<timestamp> tag).
+name: Deploy PROD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      project:
+        description: Project to deploy (e.g. sales).
+        required: true
+      ref:
+        description: Git ref to deploy. Use release/<project>/<timestamp> to roll back.
+        required: true
+        default: main
+
+permissions:
+  contents: write # push deploy/prod/<project> and release/<project>/<ts> tags
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    name: Detect projects to deploy
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.detect.outputs.projects }}
+      ref: ${{ steps.detect.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: detect
+        env:
+          PROJECT: ${{ inputs.project }}
+          REF: ${{ inputs.ref }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            git rev-parse --verify --quiet "$REF^{commit}" > /dev/null \
+              || git rev-parse --verify --quiet "origin/$REF^{commit}" > /dev/null \
+              || { echo "unknown ref '$REF'"; exit 1; }
+            python scripts/changed_projects.py select --projects "$PROJECT" --github-output
+            echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          else
+            python scripts/changed_projects.py deploy --env prod --github-output
+            echo "ref=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: changes
+    if: needs.changes.outputs.projects != '[]'
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      target: prod
+      projects: ${{ needs.changes.outputs.projects }}
+      ref: ${{ needs.changes.outputs.ref }}
+    secrets: inherit

@@ -1,0 +1,96 @@
+# Daily end-to-end run: data -> bronze -> silver -> gold -> metric views -> checks.
+# CI runs this job after every deploy as the integration test.
+resources:
+  jobs:
+    sales_daily:
+      name: "[${bundle.target}] sales_daily"
+      description: >-
+        Generates synthetic POS data, builds bronze/silver/gold Delta tables from the
+        SQL table registry, publishes the KPI metric views and runs quality checks.
+      max_concurrent_runs: 1
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: UTC
+        # dev: paused via presets; prod: active.
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+
+      tasks:
+        - task_key: generate_data
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/jobs/entrypoint.py
+            parameters:
+              - generate-data
+              - --catalog=${var.catalog}
+              - --bronze-schema=${var.bronze_schema}
+              - --files-root=${workspace.file_path}
+              - --start-date=${var.sample_start_date}
+
+        - task_key: build_bronze
+          depends_on: [{task_key: generate_data}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/jobs/entrypoint.py
+            parameters:
+              - build-tables
+              - --layers=bronze
+              - --catalog=${var.catalog}
+              - --bronze-schema=${var.bronze_schema}
+              - --silver-schema=${var.silver_schema}
+              - --gold-schema=${var.gold_schema}
+              - --files-root=${workspace.file_path}
+
+        - task_key: build_silver
+          depends_on: [{task_key: build_bronze}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/jobs/entrypoint.py
+            parameters:
+              - build-tables
+              - --layers=silver
+              - --catalog=${var.catalog}
+              - --bronze-schema=${var.bronze_schema}
+              - --silver-schema=${var.silver_schema}
+              - --gold-schema=${var.gold_schema}
+              - --files-root=${workspace.file_path}
+
+        - task_key: build_gold
+          depends_on: [{task_key: build_silver}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/jobs/entrypoint.py
+            parameters:
+              - build-tables
+              - --layers=gold
+              - --catalog=${var.catalog}
+              - --bronze-schema=${var.bronze_schema}
+              - --silver-schema=${var.silver_schema}
+              - --gold-schema=${var.gold_schema}
+              - --files-root=${workspace.file_path}
+
+        - task_key: publish_metric_views
+          depends_on: [{task_key: build_gold}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/jobs/entrypoint.py
+            parameters:
+              - publish-metric-views
+              - --catalog=${var.catalog}
+              - --gold-schema=${var.gold_schema}
+              - --files-root=${workspace.file_path}
+
+        - task_key: quality_checks
+          depends_on: [{task_key: publish_metric_views}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/jobs/entrypoint.py
+            parameters:
+              - quality-checks
+              - --catalog=${var.catalog}
+              - --silver-schema=${var.silver_schema}
+              - --gold-schema=${var.gold_schema}
+              - --files-root=${workspace.file_path}

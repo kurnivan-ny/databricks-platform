@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 390" width="1000" height="390" role="img" aria-labelledby="t d">
+  <title id="t">Sales data flow</title>
+  <desc id="d">Synthetic data is written to a landing volume, built into bronze, silver and gold Delta tables by a config-driven Python wrapper, exposed through Unity Catalog metric views, and consumed by the AI/BI dashboard and quality checks.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 18px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0f172a; }
+      .h { font: 700 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #0f172a; }
+      .b { font: 400 11.5px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #334155; }
+      .note { font: 400 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #334155; }
+      .edge { stroke: #475569; stroke-width: 1.6; fill: none; }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1000" height="390" rx="14" fill="#ffffff"/>
+  <text class="title" x="20" y="32">Sales project — data flow (job: sales_daily, serverless)</text>
+
+  <!-- wrapper band -->
+  <rect x="344" y="50" width="462" height="30" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="4 3"/>
+  <text class="note" x="575" y="70" text-anchor="middle">platform_common.tables — Python wrapper runs SQL from tables.yml</text>
+
+  <!-- 1 generator -->
+  <rect x="20" y="95" width="140" height="120" rx="8" fill="#f8fafc" stroke="#475569"/>
+  <text class="h" x="90" y="120" text-anchor="middle">Generator</text>
+  <text class="b" x="90" y="145" text-anchor="middle">Python task</text>
+  <text class="b" x="90" y="163" text-anchor="middle">synthetic POS +</text>
+  <text class="b" x="90" y="181" text-anchor="middle">footfall data</text>
+  <text class="b" x="90" y="199" text-anchor="middle">missing days only</text>
+
+  <!-- 2 landing -->
+  <rect x="182" y="95" width="140" height="120" rx="8" fill="#f8fafc" stroke="#475569"/>
+  <text class="h" x="252" y="120" text-anchor="middle">Landing volume</text>
+  <text class="b" x="252" y="145" text-anchor="middle">&lt;catalog&gt;.bronze.</text>
+  <text class="b" x="252" y="163" text-anchor="middle">sales_landing</text>
+  <text class="b" x="252" y="181" text-anchor="middle">JSON file per day</text>
+  <text class="b" x="252" y="199" text-anchor="middle">per dataset</text>
+
+  <!-- 3 bronze -->
+  <rect x="344" y="95" width="140" height="120" rx="8" fill="#f6e7d8" stroke="#a0693a"/>
+  <text class="h" x="414" y="120" text-anchor="middle">Bronze</text>
+  <text class="b" x="414" y="145" text-anchor="middle">append_new_files</text>
+  <text class="b" x="414" y="163" text-anchor="middle">4 raw Delta tables</text>
+  <text class="b" x="414" y="181" text-anchor="middle">+ _source_file</text>
+  <text class="b" x="414" y="199" text-anchor="middle">idempotent per file</text>
+
+  <!-- 4 silver -->
+  <rect x="506" y="95" width="140" height="120" rx="8" fill="#eceff4" stroke="#7b8494"/>
+  <text class="h" x="576" y="120" text-anchor="middle">Silver</text>
+  <text class="b" x="576" y="145" text-anchor="middle">MERGE on keys</text>
+  <text class="b" x="576" y="163" text-anchor="middle">expect_or_drop /</text>
+  <text class="b" x="576" y="181" text-anchor="middle">expect_or_fail</text>
+  <text class="b" x="576" y="199" text-anchor="middle">→ *_quarantine</text>
+
+  <!-- 5 gold -->
+  <rect x="668" y="95" width="140" height="120" rx="8" fill="#fbf0c9" stroke="#b8901a"/>
+  <text class="h" x="738" y="120" text-anchor="middle">Gold</text>
+  <text class="b" x="738" y="145" text-anchor="middle">CREATE OR REPLACE</text>
+  <text class="b" x="738" y="163" text-anchor="middle">additive measures</text>
+  <text class="b" x="738" y="181" text-anchor="middle">store daily/monthly,</text>
+  <text class="b" x="738" y="199" text-anchor="middle">category monthly</text>
+
+  <!-- 6 metric views -->
+  <rect x="830" y="95" width="150" height="120" rx="8" fill="#e6eefc" stroke="#3563c9"/>
+  <text class="h" x="905" y="120" text-anchor="middle">Metric views</text>
+  <text class="b" x="905" y="145" text-anchor="middle">every KPI defined once</text>
+  <text class="b" x="905" y="163" text-anchor="middle">sales_store_metrics</text>
+  <text class="b" x="905" y="181" text-anchor="middle">sales_category_metrics</text>
+  <text class="b" x="905" y="199" text-anchor="middle">+ LY and YoY</text>
+
+  <!-- arrows along the main flow -->
+  <path class="edge" d="M160 155 H180" marker-end="url(#arrow)"/>
+  <path class="edge" d="M322 155 H342" marker-end="url(#arrow)"/>
+  <path class="edge" d="M484 155 H504" marker-end="url(#arrow)"/>
+  <path class="edge" d="M646 155 H666" marker-end="url(#arrow)"/>
+  <path class="edge" d="M808 155 H828" marker-end="url(#arrow)"/>
+
+  <!-- consumers -->
+  <rect x="830" y="280" width="150" height="80" rx="8" fill="#e7f6ee" stroke="#2a8c55"/>
+  <text class="h" x="905" y="306" text-anchor="middle">AI/BI dashboard</text>
+  <text class="b" x="905" y="326" text-anchor="middle">datasets = metric views</text>
+  <text class="b" x="905" y="344" text-anchor="middle">2 pages, 29 widgets</text>
+
+  <rect x="600" y="280" width="208" height="80" rx="8" fill="#f8fafc" stroke="#475569"/>
+  <text class="h" x="704" y="306" text-anchor="middle">Quality checks</text>
+  <text class="b" x="704" y="326" text-anchor="middle">KPIs vs Python reference,</text>
+  <text class="b" x="704" y="344" text-anchor="middle">reconciliations, quarantine</text>
+
+  <path class="edge" d="M905 215 V278" marker-end="url(#arrow)"/>
+  <path class="edge" d="M880 215 L760 278" marker-end="url(#arrow)"/>
+
+  <text class="note" x="20" y="300">Same code for dev and prod: catalog and schemas are</text>
+  <text class="note" x="20" y="318">parameters (catalogs dev / prod; schemas bronze, silver, gold).</text>
+  <text class="note" x="20" y="342">KPI ratios never live in tables, only in the metric views,</text>
+  <text class="note" x="20" y="360">so they stay correct at any filter or grouping.</text>
+</svg>

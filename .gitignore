@@ -1,0 +1,24 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+
+# Databricks bundle local state and rendered artifacts
+.databricks/
+.build/
+
+# Secrets / local env — never commit tokens
+.env
+.env.*
+*.pem
+.databrickscfg
+
+# Editors / OS
+.idea/
+.DS_Store
+Thumbs.db

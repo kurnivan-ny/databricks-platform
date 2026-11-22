@@ -1,0 +1,13 @@
+# AI/BI dashboard on the Unity Catalog metric views.
+# The committed template (dashboards/*.lvdash.json) uses __CATALOG__/__GOLD_SCHEMA__
+# tokens because metric-view datasets need fully qualified names; scripts/bundle.sh
+# renders it per target into .build/ (git-ignored) before validate/deploy.
+resources:
+  dashboards:
+    sales_overview:
+      display_name: "[${bundle.target}] Sales & Store Performance"
+      file_path: ../.build/dashboards/sales_overview.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.gold_schema}
+      embed_credentials: false

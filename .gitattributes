@@ -1,0 +1,5 @@
+# Keep LF line endings in the repo so bash scripts and YAML work on Linux CI runners
+# even when edited on Windows.
+* text=auto eol=lf
+*.svg text eol=lf
+*.png binary
