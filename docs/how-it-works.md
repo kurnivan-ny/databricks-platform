@@ -11,10 +11,11 @@ decisions, see [architecture.md](architecture.md).
 5. [What a bundle is](#5-what-a-bundle-is)
 6. [`databricks.yml`, section by section](#6-databricksyml-section-by-section)
 7. [The resource files](#7-the-resource-files)
-8. [What `bundle deploy` actually does](#8-what-bundle-deploy-actually-does)
-9. [Commands you will use](#9-commands-you-will-use)
-10. [Safety features](#10-safety-features)
-11. [Glossary](#11-glossary)
+8. [What else a bundle can deploy](#8-what-else-a-bundle-can-deploy)
+9. [What `bundle deploy` actually does](#9-what-bundle-deploy-actually-does)
+10. [Commands you will use](#10-commands-you-will-use)
+11. [Safety features](#11-safety-features)
+12. [Glossary](#12-glossary)
 
 ## 1. The big picture
 
@@ -311,7 +312,65 @@ dashboards:
 | Tables (bronze, silver, gold, quarantine) | the job, every run | They are data, built from the SQL files. |
 | Metric views | the job's `publish_metric_views` step | Metric views are not yet a bundle resource type. |
 
-## 8. What `bundle deploy` actually does
+## 8. What else a bundle can deploy
+
+The `sales` bundle uses only three resource types: `jobs`, `volumes` and `dashboards`.
+The bundle schema of Databricks CLI 1.23.0 (`databricks bundle schema`) lists **39**. In
+this CLI version, bundles are also called *Declarative Automation Bundles*.
+
+### Resource types by purpose
+
+✅ marks the types this repository already uses.
+
+| Purpose | Resource keys | Example use |
+|---|---|---|
+| **Orchestration and ETL** | `jobs` ✅, `pipelines`, `job_runs` | Scheduled jobs; Lakeflow pipelines (streaming tables, materialized views) |
+| **Unity Catalog** | `catalogs`, `schemas`, `volumes` ✅, `external_locations` | Catalogs, schemas, file volumes, links to cloud storage |
+| **BI and analytics** | `dashboards` ✅, `alerts`, `genie_spaces`, `sql_warehouses` | AI/BI dashboards, SQL alerts, Genie spaces for questions in plain language |
+| **Data quality** | `quality_monitors` | Quality and drift monitoring on a table |
+| **Machine learning** | `experiments`, `models`, `registered_models`, `features` | MLflow experiments, models registered in Unity Catalog, features |
+| **Model serving and AI** | `model_serving_endpoints`, `model_services`, `model_provider_services`, `mcp_services` | Endpoints that serve a model or LLM; MCP services |
+| **Vector search (RAG)** | `vector_search_endpoints`, `vector_search_indexes` | Vector indexes for document-based AI apps |
+| **Apps** | `apps` | Databricks Apps (Streamlit, Dash, Flask, …) |
+| **OLTP database (Lakebase / Postgres)** | `postgres_projects`, `postgres_branches`, `postgres_databases`, `postgres_endpoints`, `postgres_roles`, `postgres_catalogs`, `postgres_synced_tables`, `postgres_snapshot_schedules`, `database_instances`, `database_catalogs`, `synced_database_tables` | Managed Postgres databases and Delta-to-Postgres table sync |
+| **Compute** | `clusters`, `cluster_policies`, `instance_pools` | Classic clusters and their policies |
+| **Security** | `secret_scopes`, `secrets` | Storage for passwords and API keys |
+
+**There is no `metric_views` type.** That is why the job's `publish_metric_views` task
+creates the metric views.
+
+### Other bundle features
+
+| Feature | Command or setting |
+|---|---|
+| Upload code to the workspace | `sync` ✅ |
+| Build a Python wheel or JAR and upload it | `artifacts` |
+| Run a job or pipeline | `bundle run` ✅ |
+| One definition for many environments | `targets` ✅ + `variables` ✅ |
+| Set access rights and the job identity | `permissions` ✅, `run_as` ✅ |
+| Turn something made in the UI into YAML | `bundle generate` ✅ (used by `capture-dashboard`) |
+| Link an existing resource to the bundle | `bundle deployment bind` |
+| Delete everything the bundle created | `bundle destroy` ✅ |
+
+### What works on Free Edition
+
+The list above is what bundles support. Free Edition allows less:
+
+| Status | Resource types | Reason |
+|---|---|---|
+| ❌ Not available | `clusters`, `instance_pools`, extra `sql_warehouses` | Serverless compute only, and exactly one SQL warehouse |
+| ⚠️ Needs admin rights | `catalogs`, `external_locations`, `cluster_policies` | Usually requires metastore or workspace admin privileges |
+| ⚠️ Limited by quota, test first | `model_serving_endpoints`, `vector_search_*`, `apps`, Lakebase / `postgres_*` | Free Edition has small fair-use limits |
+| ✅ Usable for next steps | `pipelines` (one active per type), `schemas`, `alerts`, `genie_spaces`, `quality_monitors`, `experiments`, `registered_models` | Within Free Edition limits |
+
+Two ideas for `sales`: an **`alerts`** resource that notifies when a KPI drops, and a
+**`genie_spaces`** resource so users can ask the metric views questions in plain
+language.
+
+The full reference for every type is in the Databricks docs:
+<https://docs.databricks.com/dev-tools/bundles/resources.html>.
+
+## 9. What `bundle deploy` actually does
 
 When you run `bash scripts/bundle.sh sales dev deploy`:
 
@@ -337,7 +396,7 @@ The **state** is how the bundle remembers what it created. If you delete a job f
 change would delete or recreate something, the deploy **stops and asks** instead of doing
 it silently.
 
-## 9. Commands you will use
+## 10. Commands you will use
 
 `scripts/bundle.sh <project> <dev|prod> <command>` wraps the Databricks CLI. GitHub
 Actions uses the same script, so local and CI behave the same.
@@ -361,7 +420,7 @@ bash scripts/bundle.sh sales dev run
 bash scripts/bundle.sh sales dev verify
 ```
 
-## 10. Safety features
+## 11. Safety features
 
 * **No passwords in the code.** Secrets live only in GitHub Secrets.
 * **PROD needs a human approval** in GitHub.
@@ -374,7 +433,7 @@ bash scripts/bundle.sh sales dev verify
 * **Portable.** All logic is in `scripts/`, so moving to GitLab only means rewriting the
   pipeline YAML.
 
-## 11. Glossary
+## 12. Glossary
 
 | Word | Meaning |
 |---|---|
