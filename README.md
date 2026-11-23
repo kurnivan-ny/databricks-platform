@@ -21,7 +21,7 @@ platform, `databricks.yml` and the bundle resources.
 
 | Document | Read it for |
 |---|---|
-| [How it works](docs/how-it-works.md) | Beginner guide: the big picture, DEV vs PROD, what each bundle file does |
+| [How it works](docs/how-it-works.md) | Beginner guide: the big picture, DEV vs PROD, what each bundle file does, every resource type a bundle can deploy |
 | [Architecture](docs/architecture.md) | Design decisions, Free Edition constraints, workspace layout, limitations |
 | [Runbook](docs/runbook.md) | Local setup, deploy/run/verify, rollback, token rotation, troubleshooting |
 | [GitHub setup](docs/github-setup.md) | One-time setup: secrets, environments, approval, branch rules |
